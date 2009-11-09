@@ -1,0 +1,89 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html" />
+<script type="text/javascript" src="mootools.js"></script>
+<script type="text/javascript" src="mootree.js"></script>
+<link rel="stylesheet" href="mootree.css" type="text/css" media="screen" />
+
+<script type="text/javascript">
+
+var tree;
+
+log = function(x) {
+	console.log(x);
+	return x;
+}
+
+insertJSONToTree = function(tree, json) {
+	if ($type(json) == 'object')
+		json = $H(json)
+
+	json.getKeys().filter(function(key) {
+			return key != 'result'
+		}).sort(function(a, b) {
+		var counter = function(s) {
+			return s.toInt();
+		}
+
+		return counter(a) - counter(b);
+	}).each(function(key) {
+		var value = json[key]
+
+		if (['object', 'hash'].contains($type(value))) {
+			var node = tree.insert({
+				text: key.substring(key.indexOf('/') + 1),
+				onClick: function() {
+					$('result').set('text', value.result)
+				},
+				color: (value.result || '').contains("[Exception]") ? 'red' : null
+			});
+
+			insertJSONToTree(node, value)
+		}
+	})
+}
+
+window.addEvent('domready', function() {
+	var json = window.location.hash.substring(1);
+
+	$('mytree').empty()
+
+	tree = new MooTreeControl({
+		div: 'mytree',
+		mode: 'files',
+		grid: true
+	},{
+		text: 'Function Call Log',
+		open: true
+	});
+	
+	tree.disable(); // this stops visual updates while we're building the tree...
+
+	insertJSONToTree(tree, JSON.decode(json))
+	
+	tree.enable(); // this turns visual updates on again.
+	
+})
+
+</script>
+
+
+  <title>asdf</title>
+
+  <style type="text/css">
+    #result {
+      width: 100%;
+      height: 200px;
+    }
+  </style>
+</head>
+
+<body>
+<textarea id="result"></textarea>
+<hr>
+<div id="mytree"></div>
+</body>
+</html>
